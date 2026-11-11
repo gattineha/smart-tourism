@@ -1,3 +1,16 @@
 from django.contrib import admin
+from .models import Category, Destination, Preference, Trip, TripDay, Review
 
-# Register your models here.
+
+@admin.register(Destination)
+class DestinationAdmin(admin.ModelAdmin):
+    list_display = ("name", "district", "category", "min_days", "max_days", "is_active")
+    list_filter = ("category", "is_active")
+    search_fields = ("name", "district")
+
+
+admin.site.register(Category)
+admin.site.register(Preference)
+admin.site.register(Trip)
+admin.site.register(TripDay)
+admin.site.register(Review)
