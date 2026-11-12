@@ -1,0 +1,46 @@
+{% extends 'tourism/base.html' %}
+{% block content %}
+<a href="{% url 'my_trips' %}" class="d-print-none">&larr; My trips</a>
+
+<div class="d-flex justify-content-between align-items-start mt-3">
+  <div>
+    <h3 class="mb-0">{{ trip.destination.name }}</h3>
+    <p class="text-muted">{{ trip.destination.district }} &middot; {{ trip.destination.category.name }}</p>
+  </div>
+  <div class="d-flex gap-2 d-print-none">
+    <button onclick="window.print()" class="btn btn-outline-secondary btn-sm">Print</button>
+    <a href="{% url 'trip_edit' trip.pk %}" class="btn btn-outline-primary btn-sm">Edit</a>
+    <form method="post" action="{% url 'trip_delete' trip.pk %}" onsubmit="return confirm('Delete this trip?');">
+      {% csrf_token %}
+      <button class="btn btn-outline-danger btn-sm">Delete</button>
+    </form>
+  </div>
+</div>
+
+<p>
+  <strong>{{ trip.days }}</strong> day{{ trip.days|pluralize }} &middot;
+  <strong>{{ trip.people }}</strong> traveller{{ trip.people|pluralize }} &middot;
+  Saved on {{ trip.created_at|date:"d M Y" }}
+</p>
+
+<h5>Estimated budget</h5>
+<table class="table table-bordered w-auto mb-1">
+  <tr><th>Transport (per person)</th><td>&#8377;{{ breakdown.transport|floatformat:0 }}</td></tr>
+  <tr><th>Accommodation (per person)</th><td>&#8377;{{ breakdown.stay|floatformat:0 }}</td></tr>
+  <tr><th>Food (per person)</th><td>&#8377;{{ breakdown.food|floatformat:0 }}</td></tr>
+  <tr><th>Activities (per person)</th><td>&#8377;{{ breakdown.activities|floatformat:0 }}</td></tr>
+  <tr class="table-light"><th>Cost per person</th><td><strong>&#8377;{{ trip.per_person_cost|floatformat:0 }}</strong></td></tr>
+  <tr class="table-success"><th>Total for the group</th><td><strong>&#8377;{{ trip.total_cost|floatformat:0 }}</strong></td></tr>
+</table>
+<p class="small text-muted mb-4">All figures are estimates, not live prices.</p>
+
+<h5>Itinerary</h5>
+{% for day in trip.trip_days.all %}
+  <div class="card mb-2">
+    <div class="card-body">
+      <strong>Day {{ day.day_number }}</strong>
+      <p class="mb-0">{{ day.plan_text|default:"(No plan written)"|linebreaksbr }}</p>
+    </div>
+  </div>
+{% endfor %}
+{% endblock %}

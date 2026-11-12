@@ -1,0 +1,47 @@
+{% extends 'tourism/base.html' %}
+{% block content %}
+<a href="{% if trip %}{% url 'trip_detail' trip.pk %}{% else %}{% url 'recommend' %}{% endif %}">&larr; Back</a>
+
+<h3 class="mt-3">{% if trip %}Edit trip{% else %}Plan your trip{% endif %}: {{ destination.name }}</h3>
+<p class="text-muted">{{ destination.district }} &middot; {{ destination.category.name }}</p>
+
+<form method="post">
+  {% csrf_token %}
+
+  <div class="row g-3 mb-4">
+    <div class="col-md-3">
+      <label class="form-label">Number of days (1-15)</label>
+      <input type="number" name="days" min="1" max="15" value="{{ days }}" class="form-control">
+    </div>
+    <div class="col-md-3">
+      <label class="form-label">Number of travellers (1-50)</label>
+      <input type="number" name="people" min="1" max="50" value="{{ people }}" class="form-control">
+    </div>
+    <div class="col-md-3 d-flex align-items-end">
+      <button type="submit" name="recalc" class="btn btn-outline-secondary w-100">Recalculate</button>
+    </div>
+  </div>
+
+  <h5>Estimated budget</h5>
+  <table class="table table-bordered w-auto mb-1">
+    <tr><th>Transport (round trip, per person)</th><td>&#8377;{{ breakdown.transport|floatformat:0 }}</td></tr>
+    <tr><th>Accommodation ({{ days }} day{{ days|pluralize }}, per person)</th><td>&#8377;{{ breakdown.stay|floatformat:0 }}</td></tr>
+    <tr><th>Food ({{ days }} day{{ days|pluralize }}, per person)</th><td>&#8377;{{ breakdown.food|floatformat:0 }}</td></tr>
+    <tr><th>Activities (per person)</th><td>&#8377;{{ breakdown.activities|floatformat:0 }}</td></tr>
+    <tr class="table-light"><th>Cost per person</th><td><strong>&#8377;{{ breakdown.per_person|floatformat:0 }}</strong></td></tr>
+    <tr class="table-success"><th>Total for {{ people }} traveller{{ people|pluralize }}</th><td><strong>&#8377;{{ breakdown.total|floatformat:0 }}</strong></td></tr>
+  </table>
+  <p class="small text-muted mb-4">All figures are estimates, not live prices.</p>
+
+  <h5>Day-wise itinerary</h5>
+  <p class="small text-muted">Write what you plan to do each day. Recommended duration: {{ destination.min_days }}-{{ destination.max_days }} days.</p>
+  {% for row in rows %}
+    <div class="mb-3">
+      <label class="form-label fw-bold">Day {{ row.number }}</label>
+      <textarea name="day_{{ row.number }}" rows="2" class="form-control" placeholder="e.g. Travel, check in, visit main viewpoint, local dinner">{{ row.text }}</textarea>
+    </div>
+  {% endfor %}
+
+  <button type="submit" name="save" class="btn btn-primary">{% if trip %}Save changes{% else %}Save trip{% endif %}</button>
+</form>
+{% endblock %}

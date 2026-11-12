@@ -1,0 +1,29 @@
+{% extends 'tourism/base.html' %}
+{% block content %}
+<h3 class="mb-3">My Trips</h3>
+
+{% if trips %}
+  <table class="table table-striped align-middle">
+    <thead>
+      <tr><th>Destination</th><th>Days</th><th>Travellers</th><th>Total</th><th>Per person</th><th>Saved on</th><th></th></tr>
+    </thead>
+    <tbody>
+      {% for t in trips %}
+      <tr>
+        <td>{{ t.destination.name }}</td>
+        <td>{{ t.days }}</td>
+        <td>{{ t.people }}</td>
+        <td>&#8377;{{ t.total_cost|floatformat:0 }}</td>
+        <td>&#8377;{{ t.per_person_cost|floatformat:0 }}</td>
+        <td>{{ t.created_at|date:"d M Y" }}</td>
+        <td><a href="{% url 'trip_detail' t.pk %}" class="btn btn-outline-primary btn-sm">View</a></td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+{% else %}
+  <div class="alert alert-info">
+    You have no saved trips yet. <a href="{% url 'recommend' %}">Find a destination</a> and plan your first trip.
+  </div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,86 @@
+{% extends 'tourism/base.html' %}
+{% block content %}
+<h3 class="mb-3">Find Your Destination</h3>
+
+<form method="post" class="card card-body mb-4">
+  {% csrf_token %}
+  {% if form.errors %}
+    <div class="alert alert-danger">Please correct the highlighted fields.</div>
+  {% endif %}
+
+  <div class="row g-3">
+    <div class="col-md-3">
+      <label class="form-label">{{ form.budget.label }}</label>
+      {{ form.budget }}
+      {{ form.budget.errors }}
+    </div>
+    <div class="col-md-3">
+      <label class="form-label">{{ form.days.label }}</label>
+      {{ form.days }}
+      {{ form.days.errors }}
+    </div>
+    <div class="col-md-3">
+      <label class="form-label">{{ form.people.label }}</label>
+      {{ form.people }}
+      {{ form.people.errors }}
+    </div>
+    <div class="col-md-3">
+      <label class="form-label">{{ form.travel_month.label }}</label>
+      {{ form.travel_month }}
+      {{ form.travel_month.errors }}
+    </div>
+  </div>
+
+  <div class="mt-3">
+    <label class="form-label d-block">{{ form.interests.label }}</label>
+    {% for checkbox in form.interests %}
+      <div class="form-check form-check-inline">
+        {{ checkbox.tag }}
+        <label class="form-check-label" for="{{ checkbox.id_for_label }}">{{ checkbox.choice_label }}</label>
+      </div>
+    {% endfor %}
+  </div>
+
+  <button class="btn btn-primary mt-3 align-self-start">Recommend destinations</button>
+</form>
+
+{% if searched %}
+  <h4 class="mb-3">Top matches for {{ month_name }}</h4>
+
+  {% for r in results %}
+    <div class="card mb-3">
+      <div class="card-body">
+        <div class="d-flex justify-content-between align-items-start">
+          <div>
+            <h5 class="mb-0">#{{ forloop.counter }} {{ r.destination.name }}</h5>
+            <small class="text-muted">{{ r.destination.district }} &middot; {{ r.destination.category.name }}</small>
+          </div>
+          <span class="badge bg-success fs-6">{{ r.score|floatformat:0 }} / 100</span>
+        </div>
+
+        <div class="progress my-3" style="height: 8px;">
+          <div class="progress-bar bg-success" style="width: {{ r.score|floatformat:0 }}%"></div>
+        </div>
+
+        <p class="mb-1">
+          <strong>Plan:</strong> {{ r.trip_days }} day(s) &middot;
+          <strong>Per person:</strong> &#8377;{{ r.cost_per_person|floatformat:0 }} &middot;
+          <strong>Group total:</strong> &#8377;{{ r.cost_total|floatformat:0 }}
+        </p>
+
+        <ul class="mb-2">
+          {% for reason in r.reasons %}<li>{{ reason }}</li>{% endfor %}
+        </ul>
+
+        <a href="{% url 'destination_detail' r.destination.pk %}" class="btn btn-outline-primary btn-sm">View details</a>
+        <a href="{% url 'plan_trip' r.destination.pk %}?days={{ r.trip_days }}&amp;people={{ people }}" class="btn btn-success btn-sm">Plan this trip</a>
+      </div>
+    </div>
+  {% empty %}
+    <div class="alert alert-warning">
+      No destination matches these preferences. Try a higher budget or more days.
+    </div>
+  {% endfor %}
+  <p class="small text-muted">Costs are estimates. Scores use weights: interest 40%, budget 30%, duration 15%, season 15%.</p>
+{% endif %}
+{% endblock %}
