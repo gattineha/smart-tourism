@@ -34,17 +34,19 @@ def recommend_destinations(budget, days, month, interest_ids, people=1, limit=5)
         if cost > budget:
             continue                      # too expensive
 
+                # If the user chose interests, show only those categories
+        if interest_ids and d.category_id not in interest_ids:
+            continue
+
         reasons = []
 
         # ---------- STEP 2: score each factor out of 100 ----------
         # Interest match
         if not interest_ids:
             interest_score = 50           # user chose nothing, so stay neutral
-        elif d.category_id in interest_ids:
+        else:
             interest_score = 100
             reasons.append(f"Matches your interest in {d.category.name}")
-        else:
-            interest_score = 0
 
         # Budget fit: cheaper than budget = higher score (100 at zero cost, 50 at full budget)
         ratio = cost / budget

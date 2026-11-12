@@ -1,6 +1,6 @@
 from django.urls import path
 from django.contrib.auth import views as auth_views
-from . import views
+from . import views, analytics
 
 urlpatterns = [
     path('', views.destination_list, name='destination_list'),
@@ -11,6 +11,7 @@ urlpatterns = [
     path('trips/<int:pk>/', views.trip_detail, name='trip_detail'),
     path('trips/<int:pk>/edit/', views.trip_edit, name='trip_edit'),
     path('trips/<int:pk>/delete/', views.trip_delete, name='trip_delete'),
+    path('dashboard/', analytics.dashboard, name='dashboard'),
     path('register/', views.register, name='register'),
     path('login/', auth_views.LoginView.as_view(template_name='tourism/login.html'), name='login'),
     path('logout/', auth_views.LogoutView.as_view(), name='logout'),

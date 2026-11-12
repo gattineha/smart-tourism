@@ -1,0 +1,84 @@
+{% extends 'tourism/base.html' %}
+{% block content %}
+<h3 class="mb-3">Tourism Analytics Dashboard</h3>
+
+<div class="row g-3 mb-4">
+  <div class="col-6 col-md-2"><div class="card text-center"><div class="card-body">
+    <div class="fs-3">{{ cards.destinations }}</div><div class="small text-muted">Destinations</div></div></div></div>
+  <div class="col-6 col-md-2"><div class="card text-center"><div class="card-body">
+    <div class="fs-3">{{ cards.users }}</div><div class="small text-muted">Travellers</div></div></div></div>
+  <div class="col-6 col-md-2"><div class="card text-center"><div class="card-body">
+    <div class="fs-3">{{ cards.trips }}</div><div class="small text-muted">Saved trips</div></div></div></div>
+  <div class="col-6 col-md-2"><div class="card text-center"><div class="card-body">
+    <div class="fs-3">{{ cards.reviews }}</div><div class="small text-muted">Reviews</div></div></div></div>
+  <div class="col-6 col-md-2"><div class="card text-center"><div class="card-body">
+    <div class="fs-3">&#8377;{{ cards.avg_trip_budget }}</div><div class="small text-muted">Avg cost / person (saved trips)</div></div></div></div>
+  <div class="col-6 col-md-2"><div class="card text-center"><div class="card-body">
+    <div class="fs-3">&#8377;{{ cards.avg_pref_budget }}</div><div class="small text-muted">Avg budget entered by users</div></div></div></div>
+</div>
+
+<div class="row g-4">
+  <div class="col-md-6"><div class="card"><div class="card-body">
+    <h6>Destinations per category</h6>
+    <div class="chart-box"><canvas id="chartCategory"></canvas></div>
+  </div></div></div>
+
+  <div class="col-md-6"><div class="card"><div class="card-body">
+    <h6>Most frequently saved destinations</h6>
+    <div class="chart-box"><canvas id="chartSaved"></canvas></div>
+  </div></div></div>
+
+  <div class="col-md-6"><div class="card"><div class="card-body">
+    <h6>Popular interests among users</h6>
+    <div class="chart-box"><canvas id="chartInterests"></canvas></div>
+  </div></div></div>
+
+  <div class="col-md-6"><div class="card"><div class="card-body">
+    <h6>Trip duration pattern</h6>
+    <div class="chart-box"><canvas id="chartDurations"></canvas></div>
+  </div></div></div>
+</div>
+
+<p class="small text-muted mt-3">
+  These figures are based only on records stored in this application. They are not representative of all tourists.
+</p>
+
+{{ chart_data|json_script:"chart-data" }}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+<script>
+  const data = JSON.parse(document.getElementById('chart-data').textContent);
+  const colors = ['#0d6efd', '#198754', '#fd7e14', '#6f42c1', '#dc3545', '#20c997', '#ffc107'];
+
+  function draw(canvasId, type, info, label) {
+    const canvas = document.getElementById(canvasId);
+    if (!info.labels.length) {
+      canvas.parentElement.innerHTML = '<p class="text-muted">No data yet.</p>';
+      return;
+    }
+    const isCircle = (type === 'doughnut');
+    new Chart(canvas, {
+      type: type,
+      data: {
+        labels: info.labels,
+        datasets: [{
+          label: label,
+          data: info.values,
+          backgroundColor: isCircle ? colors : colors[0],
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: isCircle } },
+        scales: isCircle ? {} : { y: { beginAtZero: true, ticks: { precision: 0 } } }
+      }
+    });
+  }
+
+  draw('chartCategory', 'bar', data.category, 'Destinations');
+  draw('chartSaved', 'bar', data.saved, 'Times saved');
+  draw('chartInterests', 'doughnut', data.interests, 'Users');
+  draw('chartDurations', 'bar', data.durations, 'Trips');
+</script>
+<style>.chart-box { position: relative; height: 260px; }</style>
+{% endblock %}
