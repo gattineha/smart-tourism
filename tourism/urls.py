@@ -1,10 +1,13 @@
 from django.urls import path
 from django.contrib.auth import views as auth_views
-from . import views, analytics
+from . import views, analytics, engagement
 
 urlpatterns = [
     path('', views.destination_list, name='destination_list'),
-    path('destination/<int:pk>/', views.destination_detail, name='destination_detail'),
+    path('destination/<int:pk>/', engagement.destination_detail, name='destination_detail'),
+    path('destination/<int:pk>/review/', engagement.review_submit, name='review_submit'),
+    path('destination/<int:pk>/review/delete/', engagement.review_delete, name='review_delete'),
+    path('compare/', engagement.compare, name='compare'),
     path('recommend/', views.recommend, name='recommend'),
     path('plan/<int:pk>/', views.plan_trip, name='plan_trip'),
     path('trips/', views.my_trips, name='my_trips'),

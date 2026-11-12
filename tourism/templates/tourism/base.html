@@ -34,7 +34,7 @@
 <div class="container">
   {% if messages %}
     {% for message in messages %}
-      <div class="alert alert-success">{{ message }}</div>
+            <div class="alert {% if message.tags == 'error' %}alert-danger{% else %}alert-success{% endif %}">{{ message }}</div>
     {% endfor %}
   {% endif %}
   {% block content %}{% endblock %}

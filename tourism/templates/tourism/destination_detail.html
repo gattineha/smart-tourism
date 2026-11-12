@@ -7,19 +7,58 @@
 
 <table class="table table-bordered w-auto">
   <tr><th>Recommended days</th><td>{{ destination.min_days }} - {{ destination.max_days }}</td></tr>
-  <tr><th>Transport (est.)</th><td>&#8377;{{ destination.transport_cost }}</td></tr>
-  <tr><th>Stay per day (est.)</th><td>&#8377;{{ destination.stay_cost_per_day }}</td></tr>
-  <tr><th>Food per day (est.)</th><td>&#8377;{{ destination.food_cost_per_day }}</td></tr>
-  <tr><th>Activities (est.)</th><td>&#8377;{{ destination.activity_cost }}</td></tr>
+  <tr><th>Transport (est.)</th><td>&#8377;{{ destination.transport_cost|floatformat:0 }}</td></tr>
+  <tr><th>Stay per day (est.)</th><td>&#8377;{{ destination.stay_cost_per_day|floatformat:0 }}</td></tr>
+  <tr><th>Food per day (est.)</th><td>&#8377;{{ destination.food_cost_per_day|floatformat:0 }}</td></tr>
+  <tr><th>Activities (est.)</th><td>&#8377;{{ destination.activity_cost|floatformat:0 }}</td></tr>
   <tr><th>Best months</th><td>{{ destination.best_months }}</td></tr>
 </table>
 <p class="small text-muted">All costs are estimates per person.</p>
 
-<h5>Reviews</h5>
-{% if avg_rating %}<p>Average rating: {{ avg_rating|floatformat:1 }} / 5</p>{% endif %}
+<a href="{% url 'plan_trip' destination.pk %}" class="btn btn-success btn-sm mb-4">Plan a trip here</a>
+
+<h5 class="mt-2">Reviews</h5>
+{% if review_count %}
+  <p>Average rating: <strong>{{ avg_rating|floatformat:1 }} / 5</strong> from {{ review_count }} review{{ review_count|pluralize }}</p>
+{% endif %}
+
+{% if user.is_authenticated %}
+  <div class="card card-body mb-3">
+    <h6>{% if my_review %}Edit your review{% else %}Write a review{% endif %}</h6>
+    <form method="post" action="{% url 'review_submit' destination.pk %}">
+      {% csrf_token %}
+      <div class="row g-3">
+        <div class="col-md-3">
+          <label class="form-label">{{ form.rating.label }}</label>
+          {{ form.rating }}
+        </div>
+        <div class="col-md-9">
+          <label class="form-label">{{ form.comment.label }}</label>
+          {{ form.comment }}
+        </div>
+      </div>
+      <button class="btn btn-primary btn-sm mt-3">{% if my_review %}Update review{% else %}Submit review{% endif %}</button>
+    </form>
+    {% if my_review %}
+      <form method="post" action="{% url 'review_delete' destination.pk %}" class="mt-2"
+            onsubmit="return confirm('Delete your review?');">
+        {% csrf_token %}
+        <button class="btn btn-outline-danger btn-sm">Delete my review</button>
+      </form>
+    {% endif %}
+  </div>
+{% else %}
+  <p><a href="{% url 'login' %}">Login</a> to write a review.</p>
+{% endif %}
+
 {% for r in reviews %}
-  <p><strong>{{ r.user.username }}</strong>: {{ r.rating }}/5 &mdash; {{ r.comment }}</p>
+  <div class="border rounded p-2 mb-2">
+    <strong>{{ r.user.username }}</strong> &middot; {{ r.rating }}/5
+    <small class="text-muted">&middot; {{ r.created_at|date:"d M Y" }}</small>
+    {% if r.comment %}<p class="mb-0">{{ r.comment|linebreaksbr }}</p>{% endif %}
+  </div>
 {% empty %}
-  <p>No reviews yet.</p>
+  <p>No reviews yet. Be the first to review.</p>
 {% endfor %}
+<p class="small text-muted">Ratings are user opinions and are shown for information only.</p>
 {% endblock %}

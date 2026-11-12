@@ -2,7 +2,7 @@
 {% block content %}
 <h3 class="mb-3">Explore Destinations</h3>
 
-<form method="get" class="row g-2 mb-4">
+<form method="get" class="row g-2 mb-3">
   <div class="col-md-5">
     <input type="text" name="q" value="{{ q }}" class="form-control" placeholder="Search by name or district">
   </div>
@@ -19,6 +19,11 @@
   </div>
 </form>
 
+<form id="compareForm" method="get" action="{% url 'compare' %}" class="mb-3">
+  <button class="btn btn-success btn-sm">Compare selected</button>
+  <span class="small text-muted ms-2">Tick 2 to 4 destinations below</span>
+</form>
+
 <div class="row">
   {% for d in destinations %}
     <div class="col-md-4 mb-4">
@@ -28,6 +33,11 @@
           <p class="text-muted mb-1">{{ d.district }} &middot; {{ d.category.name }}</p>
           <p class="card-text">{{ d.description|truncatewords:20 }}</p>
           <a href="{% url 'destination_detail' d.pk %}" class="btn btn-outline-primary btn-sm">View details</a>
+          <div class="form-check mt-2">
+            <input class="form-check-input compare-box" type="checkbox" name="ids" value="{{ d.pk }}"
+                   form="compareForm" id="cmp{{ d.pk }}">
+            <label class="form-check-label small" for="cmp{{ d.pk }}">Compare</label>
+          </div>
         </div>
       </div>
     </div>
@@ -35,4 +45,15 @@
     <p>No destinations found.</p>
   {% endfor %}
 </div>
+
+<script>
+  document.querySelectorAll('.compare-box').forEach(function (box) {
+    box.addEventListener('change', function () {
+      if (document.querySelectorAll('.compare-box:checked').length > 4) {
+        box.checked = false;
+        alert('You can compare up to 4 destinations at a time.');
+      }
+    });
+  });
+</script>
 {% endblock %}
