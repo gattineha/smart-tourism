@@ -1,59 +1,111 @@
 {% extends 'tourism/base.html' %}
+
+{% block hero %}
+{% if not q and not selected_category %}
+<section class="hero">
+  <div class="container">
+    <h1>Pick a place that fits your budget, your days and the month.</h1>
+    <p class="hero-text">
+      {{ destinations|length }} destinations across Maharashtra, ranked for you with the reasons shown and the trip cost worked out.
+    </p>
+    <div class="d-flex flex-wrap gap-2">
+      <a class="btn btn-primary btn-lg" href="{% url 'recommend' %}">Find my destination</a>
+      <a class="btn btn-outline-light btn-lg" href="#browse">Browse all places</a>
+    </div>
+  </div>
+  <svg class="hero-ridge" viewBox="0 0 1200 90" preserveAspectRatio="none" aria-hidden="true">
+    <path class="back" d="M0 90 L0 40 L180 40 L215 12 L380 12 L420 45 L560 45 L600 22 L760 22 L800 52 L940 52 L975 14 L1100 14 L1135 44 L1200 44 L1200 90 Z"/>
+    <path class="front" d="M0 90 L0 55 L110 55 L140 28 L290 28 L325 60 L460 60 L490 18 L660 18 L695 50 L830 50 L862 32 L1010 32 L1045 66 L1150 66 L1180 40 L1200 40 L1200 90 Z"/>
+  </svg>
+</section>
+{% endif %}
+{% endblock %}
+
 {% block content %}
-<h3 class="mb-3">Explore Destinations</h3>
+<section id="browse">
+  <h2 class="mb-3">Explore destinations</h2>
 
-<form method="get" class="row g-2 mb-3">
-  <div class="col-md-5">
-    <input type="text" name="q" value="{{ q }}" class="form-control" placeholder="Search by name or district">
-  </div>
-  <div class="col-md-4">
-    <select name="category" class="form-select">
-      <option value="">All categories</option>
-      {% for c in categories %}
-        <option value="{{ c.id }}" {% if selected_category == c.id|stringformat:"s" %}selected{% endif %}>{{ c.name }}</option>
-      {% endfor %}
-    </select>
-  </div>
-  <div class="col-md-3">
-    <button class="btn btn-primary w-100">Search</button>
-  </div>
-</form>
+  <form method="get" class="search-row mb-3">
+    <input type="text" name="q" value="{{ q }}" class="form-control" placeholder="Search by name or district" aria-label="Search destinations">
+    {% if selected_category %}<input type="hidden" name="category" value="{{ selected_category }}">{% endif %}
+    <button class="btn btn-primary">Search</button>
+  </form>
 
-<form id="compareForm" method="get" action="{% url 'compare' %}" class="mb-3">
-  <button class="btn btn-success btn-sm">Compare selected</button>
-  <span class="small text-muted ms-2">Tick 2 to 4 destinations below</span>
-</form>
+  <div class="chip-row mb-3" aria-label="Filter by category">
+    <a class="chip {% if not selected_category %}active{% endif %}" href="?{% if q %}q={{ q|urlencode }}{% endif %}">All</a>
+    {% for c in categories %}
+      <a class="chip {% if selected_category == c.id|stringformat:'s' %}active{% endif %}"
+         href="?category={{ c.id }}{% if q %}&amp;q={{ q|urlencode }}{% endif %}">{{ c.name }}</a>
+    {% endfor %}
+  </div>
 
-<div class="row">
-  {% for d in destinations %}
-    <div class="col-md-4 mb-4">
-      <div class="card h-100">
-        <div class="card-body">
-          <h5 class="card-title">{{ d.name }}</h5>
-          <p class="text-muted mb-1">{{ d.district }} &middot; {{ d.category.name }}</p>
-          <p class="card-text">{{ d.description|truncatewords:20 }}</p>
-          <a href="{% url 'destination_detail' d.pk %}" class="btn btn-outline-primary btn-sm">View details</a>
-          <div class="form-check mt-2">
-            <input class="form-check-input compare-box" type="checkbox" name="ids" value="{{ d.pk }}"
-                   form="compareForm" id="cmp{{ d.pk }}">
-            <label class="form-check-label small" for="cmp{{ d.pk }}">Compare</label>
+  <p class="text-muted mb-4">{{ destinations|length }} place{{ destinations|length|pluralize }} found</p>
+
+  <div class="row g-4">
+    {% for d in destinations %}
+      <div class="col-sm-6 col-lg-4">
+        <article class="dest-card cat-{{ d.category.name|slugify }}">
+          <div class="dest-band"
+               {% if d.image_url %}style="background-image: linear-gradient(rgba(0,0,0,.35), rgba(0,0,0,.35)), url('{{ d.image_url }}')"{% endif %}>
+            <span class="tag">{{ d.category.name }}</span>
           </div>
+          <div class="dest-body">
+            <h3>{{ d.name }}</h3>
+            <p class="district">{{ d.district }}</p>
+            <p>{{ d.description|truncatewords:20 }}</p>
+            <span class="fact">{{ d.min_days }} to {{ d.max_days }} days</span>
+          </div>
+          <div class="dest-foot">
+            <a href="{% url 'destination_detail' d.pk %}" class="btn btn-outline-primary btn-sm">View details</a>
+            <label class="compare-toggle">
+              <input type="checkbox" class="compare-box" name="ids" value="{{ d.pk }}" form="compareForm">
+              Compare
+            </label>
+          </div>
+        </article>
+      </div>
+    {% empty %}
+      <div class="col-12">
+        <div class="alert alert-warning">
+          No destination matches your search. Try another word, or <a href="{% url 'destination_list' %}">clear the filters</a>.
         </div>
       </div>
-    </div>
-  {% empty %}
-    <p>No destinations found.</p>
-  {% endfor %}
-</div>
+    {% endfor %}
+  </div>
+</section>
+
+<form id="compareForm" method="get" action="{% url 'compare' %}" class="compare-bar" aria-live="polite">
+  <div class="container d-flex align-items-center justify-content-between gap-3">
+    <strong id="cmpCount">0 selected</strong>
+    <span class="d-none d-sm-inline small">Pick 2 to 4 places to compare costs side by side</span>
+    <button id="cmpBtn" class="btn btn-primary btn-sm" disabled>Compare places</button>
+  </div>
+</form>
 
 <script>
-  document.querySelectorAll('.compare-box').forEach(function (box) {
-    box.addEventListener('change', function () {
-      if (document.querySelectorAll('.compare-box:checked').length > 4) {
-        box.checked = false;
-        alert('You can compare up to 4 destinations at a time.');
-      }
+  (function () {
+    var boxes = document.querySelectorAll('.compare-box');
+    var bar = document.getElementById('compareForm');
+    var count = document.getElementById('cmpCount');
+    var btn = document.getElementById('cmpBtn');
+
+    function update() {
+      var n = document.querySelectorAll('.compare-box:checked').length;
+      count.textContent = n + ' selected';
+      btn.disabled = n < 2;
+      bar.classList.toggle('show', n > 0);
+    }
+
+    boxes.forEach(function (box) {
+      box.addEventListener('change', function () {
+        if (document.querySelectorAll('.compare-box:checked').length > 4) {
+          box.checked = false;
+          alert('You can compare up to 4 destinations at a time.');
+        }
+        update();
+      });
     });
-  });
+    update();
+  })();
 </script>
 {% endblock %}

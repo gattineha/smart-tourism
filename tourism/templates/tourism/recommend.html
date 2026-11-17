@@ -1,86 +1,91 @@
 {% extends 'tourism/base.html' %}
 {% block content %}
-<h3 class="mb-3">Find Your Destination</h3>
+<h1 class="h2 mb-1">Find your destination</h1>
+<p class="text-muted mb-4">Tell us your budget, days and interests. We rank the places that fit and show why.</p>
 
-<form method="post" class="card card-body mb-4">
+<form method="post" class="panel mb-5">
   {% csrf_token %}
   {% if form.errors %}
-    <div class="alert alert-danger">Please correct the highlighted fields.</div>
+    <div class="alert alert-danger">Check the fields below and try again.</div>
   {% endif %}
 
   <div class="row g-3">
     <div class="col-md-3">
-      <label class="form-label">{{ form.budget.label }}</label>
+      <label class="form-label fw-semibold">{{ form.budget.label }}</label>
       {{ form.budget }}
       {{ form.budget.errors }}
     </div>
     <div class="col-md-3">
-      <label class="form-label">{{ form.days.label }}</label>
+      <label class="form-label fw-semibold">{{ form.days.label }}</label>
       {{ form.days }}
       {{ form.days.errors }}
     </div>
     <div class="col-md-3">
-      <label class="form-label">{{ form.people.label }}</label>
+      <label class="form-label fw-semibold">{{ form.people.label }}</label>
       {{ form.people }}
       {{ form.people.errors }}
     </div>
     <div class="col-md-3">
-      <label class="form-label">{{ form.travel_month.label }}</label>
+      <label class="form-label fw-semibold">{{ form.travel_month.label }}</label>
       {{ form.travel_month }}
       {{ form.travel_month.errors }}
     </div>
   </div>
 
-  <div class="mt-3">
-    <label class="form-label d-block">{{ form.interests.label }}</label>
-    {% for checkbox in form.interests %}
-      <div class="form-check form-check-inline">
-        {{ checkbox.tag }}
-        <label class="form-check-label" for="{{ checkbox.id_for_label }}">{{ checkbox.choice_label }}</label>
-      </div>
-    {% endfor %}
-  </div>
+  <fieldset class="mt-4">
+    <legend class="h6">{{ form.interests.label }}</legend>
+    <div class="chip-row">
+      {% for checkbox in form.interests %}
+        <span class="chip-wrap">
+          {{ checkbox.tag }}
+          <label class="chip" for="{{ checkbox.id_for_label }}">{{ checkbox.choice_label }}</label>
+        </span>
+      {% endfor %}
+    </div>
+    <p class="small text-muted mt-2 mb-0">Pick none to see every category.</p>
+  </fieldset>
 
-  <button class="btn btn-primary mt-3 align-self-start">Recommend destinations</button>
+  <button class="btn btn-primary btn-lg mt-4">Show recommendations</button>
 </form>
 
 {% if searched %}
-  <h4 class="mb-3">Top matches for {{ month_name }}</h4>
+  <h2 class="h3 mb-3">Best matches for {{ month_name }}</h2>
 
   {% for r in results %}
-    <div class="card mb-3">
-      <div class="card-body">
-        <div class="d-flex justify-content-between align-items-start">
-          <div>
-            <h5 class="mb-0">#{{ forloop.counter }} {{ r.destination.name }}</h5>
-            <small class="text-muted">{{ r.destination.district }} &middot; {{ r.destination.category.name }}</small>
-          </div>
-          <span class="badge bg-success fs-6">{{ r.score|floatformat:0 }} / 100</span>
-        </div>
+    <article class="result cat-{{ r.destination.category.name|slugify }} mb-3">
+      <div class="dial" style="--score: {{ r.score|floatformat:0 }}" role="img"
+           aria-label="Match score {{ r.score|floatformat:0 }} out of 100">
+        <span>{{ r.score|floatformat:0 }}</span>
+      </div>
 
-        <div class="progress my-3" style="height: 8px;">
-          <div class="progress-bar bg-success" style="width: {{ r.score|floatformat:0 }}%"></div>
+      <div>
+        <div class="d-flex flex-wrap align-items-baseline gap-2">
+          <h3 class="h4 mb-0">{{ r.destination.name }}</h3>
+          <span class="cat-badge">{{ r.destination.category.name }}</span>
+          <span class="text-muted small">Rank {{ forloop.counter }}</span>
         </div>
+        <p class="district mb-2">{{ r.destination.district }}</p>
 
         <p class="mb-1">
-          <strong>Plan:</strong> {{ r.trip_days }} day(s) &middot;
-          <strong>Per person:</strong> &#8377;{{ r.cost_per_person|floatformat:0 }} &middot;
-          <strong>Group total:</strong> &#8377;{{ r.cost_total|floatformat:0 }}
+          <strong>{{ r.trip_days }} day{{ r.trip_days|pluralize }}</strong> planned,
+          <strong>&#8377;{{ r.cost_per_person|floatformat:0 }}</strong> per person,
+          <strong>&#8377;{{ r.cost_total|floatformat:0 }}</strong> for {{ people }} traveller{{ people|pluralize }}
         </p>
 
-        <ul class="mb-2">
+        <ul class="reasons">
           {% for reason in r.reasons %}<li>{{ reason }}</li>{% endfor %}
         </ul>
 
-        <a href="{% url 'destination_detail' r.destination.pk %}" class="btn btn-outline-primary btn-sm">View details</a>
         <a href="{% url 'plan_trip' r.destination.pk %}?days={{ r.trip_days }}&amp;people={{ people }}" class="btn btn-success btn-sm">Plan this trip</a>
+        <a href="{% url 'destination_detail' r.destination.pk %}" class="btn btn-outline-primary btn-sm">View details</a>
       </div>
-    </div>
+    </article>
   {% empty %}
     <div class="alert alert-warning">
-            No destination matches these preferences. Try a higher budget, more days, or more interests.
+      No destination matches these preferences. Try a higher budget, more days, or more interests.
     </div>
   {% endfor %}
-  <p class="small text-muted">Costs are estimates. Scores use weights: interest 40%, budget 30%, duration 15%, season 15%.</p>
+
+  <p class="small text-muted">Costs are estimates. Score weights: interest 40%, budget 30%, duration 15%, season 15%.</p>
 {% endif %}
 {% endblock %}
